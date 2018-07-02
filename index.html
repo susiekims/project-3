@@ -2,11 +2,43 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<title>Document</title>
+	<title>Wine Pairing App</title>
 	<link rel="stylesheet" href="public/styles/style.css">
+	<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 </head>
 <body>
-	<h1>Hello World!</h1>
+	<h1>Persommelier</h1>
+	<h2>Your personal sommelier.</h2>
+	<form>
+		<label>What are you eating tonight?</label>
+		<select name="food" id="food">
+          	<option selected value="fish">Fish</option>
+          	<option value="beef">Beef</option>
+          	<option value="chicken">Chicken</option>
+          	<option value="salad">Salad</option>
+          	<option value="lamb">Lamb</option>
+          	<option value="cheese">Cheese</option>
+          	<option value="dessert">Dessert</option>
+     	</select>
+
+     	<label>What is your price range?</label>
+     	<select name="price" id="price">
+        	<option selected value="10">$0 - $10</option>
+        	<option value="1500">$11 - $15</option>
+        	<option value="2000">$16 - $20</option>
+        	<option value="2500">$21 - $25</option>
+        	<option value="3000">$26 - $30</option>
+        	<option value="3500">$31 - $35</option>
+        	<option value="4000">$36 - $40</option>
+        	<option value="4500">$41 - $45</option>
+     	</select>
+     	<input type="submit" class="submit" value="Search Wines">
+ 	</form>
+  
+
+	
 	<script src="public/scripts/app.js"></script>
 </body>
 </html>
+
