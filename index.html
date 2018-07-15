@@ -33,10 +33,15 @@
         	<option value="4000">$36 - $40</option>
         	<option value="4500">$41 - $45</option>
      	</select>
-     	<input type="submit" class="submit" value="Search Wines">
+     	<button id="wineButton">Search Wines</button>
  	</form>
   
-
+  <div id="loader"></div>
+  <div id="wine"></div>
+  <div id="locations">
+    <button id="storeButton">Find in a store near you</button>
+    <input type="text" id="stores" placeholder="Or search by city or Postal Code">
+  </div>
 	
 	<script src="public/scripts/app.js"></script>
 </body>
