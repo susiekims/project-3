@@ -97,27 +97,110 @@ wineApp.getStores = (idNumber, latitude, longitude) => {
 	$.ajax({
 		url: 'https://lcboapi.com/stores',
 		method: 'GET',
-		dataType:'jsonp',
+		dataType:'json',
 		headers: {
 			'Authorization': 'Token MDoxZmYyNzU4MC03NWE3LTExZTgtYmVmMy0zYmY0Njk4ZDI5YTA6cHhBRGw5RWFmMjZuQk1PcWJhZzg1Vm5OMzBLaWpkTnNqU0ZW'
 			},
 		data: {
 			product_id: idNumber,
-			per_page: 3,
+			per_page: 10,
 			lat: latitude,
-			lng: longitude
+			lon: longitude
 		}
 		}).then(function(res) {	
 			const stores = res.result;
 			console.log(stores);
+			const userCoords = {
+				lat: latitude,
+				lng: longitude
+			}
+			const storeInfo = []
+			for (let i = 0; i < stores.length; i++) {
+				storeInfo[i] = {
+					coords: {
+						lat: stores[i].latitude,
+						lng: stores[i].longitude
+					},	
+					storeName: stores[i].name,
+					quantity: stores[i].quantity,
+					hours: {
+						monday: {
+							open: stores[i].monday_open,
+							close: stores[i].monday_close
+						},
+						tuesday: {
+							open: stores[i].tuesday_open,
+							close: stores[i].tuesday_close
+						},
+						wednesday: {
+							open: stores[i].wednesday_open,
+							close: stores[i].wednesday_close
+						},
+						thursday: {
+							open: stores[i].thursday_open,
+							close: stores[i].thursday_close
+						},
+						friday: {
+							open: stores[i].friday_open,
+							close: stores[i].friday_close
+						},
+						saturday: {
+							open: stores[i].saturday_open,
+							close: stores[i].saturday_close
+						},
+						sunday: {
+							open: stores[i].sunday_open,
+							close: stores[i].sunday_close
+						}
+					},
+				}
+			}
+			wineApp.loadMap(userCoords, storeInfo);
 		});
 }
 
+wineApp.loadMap = (centerCoords, storesWithProduct) => {
+	const map = new google.maps.Map(
+		document.getElementById('map'), {zoom: 12, center: centerCoords});
+	const markers = [];
+	const infoWindow = [];
+	const content = [];
+	for (let i = 0; i < storesWithProduct.length; i++) {
+		content[i] = `<div id="content_${i}">
+			<h3>${storesWithProduct[i].storeName}</h3>
+			<h3>Hours</h3>
+			<ul>
+				<li>Monday: ${storesWithProduct[i].hours.monday.open} - ${storesWithProduct[i].hours.monday.close}</li>
+				<li>Tuesday: ${storesWithProduct[i].hours.tuesday.open} - ${storesWithProduct[i].hours.tuesday.close}</li>
+				<li>Wednesday: ${storesWithProduct[i].hours.wednesday.open} - ${storesWithProduct[i].hours.wednesday.close}</li>
+				<li>Thursday: ${storesWithProduct[i].hours.thursday.open} - ${storesWithProduct[i].hours.thursday.close}</li>
+				<li>Friday: ${storesWithProduct[i].hours.friday.open} - ${storesWithProduct[i].hours.friday.close}</li>
+				<li>Saturday: ${storesWithProduct[i].hours.saturday.open} - ${storesWithProduct[i].hours.saturday.close}</li>
+				<li>Sunday: ${storesWithProduct[i].hours.sunday.open} - ${storesWithProduct[i].hours.sunday.close}</li>
+			</ul>
+			<h3>Bottles in stock: ${storesWithProduct[i].quantity}</h3>
+		`;
+		markers[i] = new google.maps.Marker(
+			{
+				position: storesWithProduct[i].coords, 
+				label: `${i+1}`,
+				map: map
+			}
+		);
+        infoWindow[i] = new google.maps.InfoWindow({
+        	content: content[i]
+        });
+        markers[i].addListener('click', function() {
+        	infoWindow[i].open(map, markers[i]);
+        });
+	}
+}
 
 wineApp.init = () => {
 	$('#wineButton').on('click', function(e) {
 		e.preventDefault();
 		$('#loader').addClass("loader");
+		$('#locations').toggle(false);
 		wineApp.pageNumber = 1;
 		wineApp.wineList = [];
 		$('#wine').empty();
