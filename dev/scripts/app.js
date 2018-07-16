@@ -1,15 +1,12 @@
 const wineApp = {}
-
-wineApp.wineList = [];
-
-wineApp.pageNumber = 1;
-
 wineApp.productID;
 
 let searchFood ;
 let searchPrice ;
 
 wineApp.getWines = (food, price, pageNumber) => {
+$('#map').toggle(false);	
+const randomPageNumber = Math.floor(Math.random()*100);	
 	$.ajax({
 		url: 'https://lcboapi.com/products',
 		method: 'GET',
@@ -21,21 +18,12 @@ wineApp.getWines = (food, price, pageNumber) => {
 			per_page: 100,
 			page: pageNumber,
 			q: 'wine',
-			order: 'price_in_cents.asc'
 		}
 		}).then(function(res) {
-			
 			const products = res.result;
-
 			searchFood = $('#food').val();
 			searchPrice = $('#price').val();
 
-			// console.log(products);
-
-		if (products.length === 100 && products[99].price_in_cents < price) {
-			wineApp.pageNumber++;
-			// console.log(wineApp.pageNumber);
-			wineApp.getWines(searchFood, searchPrice, wineApp.pageNumber);
 			const filteredWineList = products.filter((product) => {
 				return product.serving_suggestion != null &&
 					   product.image_url != null &&
@@ -43,33 +31,18 @@ wineApp.getWines = (food, price, pageNumber) => {
     				   product.price_in_cents >= price - 400 &&
     				   product.serving_suggestion.indexOf(food) != -1 &&
     				   product.package_unit_volume_in_milliliters === 750;
-
 			});
-
+			console.log(pageNumber);
+			console.log(filteredWineList);
+			
 			if (filteredWineList.length > 0) {
-
-				wineApp.wineList.push(filteredWineList);
-				// console.log(filteredWineList);
-			}	
-		} else {
-			console.log('no more wine!')
-			wineApp.flattenArray();
-		}
+				const randomWine = filteredWineList[Math.floor(Math.random()*filteredWineList.length)];
+				console.log(randomWine);
+				wineApp.displayWine(randomWine);
+			} else {
+				wineApp.getWines(searchFood, searchPrice, randomPageNumber);
+			}
 	});
-}
-
-wineApp.flattenArray = () => {
-	const flattenedList = wineApp.wineList.reduce(function(a, b) {
-  			return a.concat(b);
-		});
-		// console.log(flattenedList);
-		wineApp.pickRandomWine(flattenedList);
-}
-
-wineApp.pickRandomWine = (arr) => {
-	const theWinner = arr[Math.floor(Math.random()*arr.length)];
-	console.log(theWinner);
-	wineApp.displayWine(theWinner);
 }
 
 wineApp.displayWine = (wine) => {
@@ -92,6 +65,30 @@ wineApp.getUserCoords = () => {
         wineApp.getStores(wineApp.productID, userLat, userLng);
     });
 }
+
+wineApp.msmTo24time = (msm) => {
+        const hour = msm / 60;
+        const mins = msm % 60;
+        if (mins === 0) {
+            const twoZeroes = '00'
+            return [Math.floor(hour), twoZeroes];
+        } else {
+        	return [Math.floor(hour), mins];
+        }
+    } 
+wineApp.msmTo12time = (msm) => {
+        const time = wineApp.msmTo24time(msm);
+        const h24  = time[0];
+        const h12  = (0 == h24 ? 12 : (h24 > 12 ? (h24 - 10) - 2 : h24));
+        const ampm = (h24 >= 12 ? 'PM' : 'AM');
+		return [h12, time[1], ampm];
+    }
+wineApp.getTime = (msm) => {
+        const time = wineApp.msmTo12time(msm);
+        const newTime = time[0] + ':' + time[1] + time[2];
+        return (newTime);
+    }
+
 
 wineApp.getStores = (idNumber, latitude, longitude) => {
 	$.ajax({
@@ -122,44 +119,46 @@ wineApp.getStores = (idNumber, latitude, longitude) => {
 						lng: stores[i].longitude
 					},	
 					storeName: stores[i].name,
-					quantity: stores[i].quantity,
 					hours: {
 						monday: {
-							open: stores[i].monday_open,
-							close: stores[i].monday_close
+							open: wineApp.getTime(stores[i].monday_open),
+							close: wineApp.getTime(stores[i].monday_close)
 						},
 						tuesday: {
-							open: stores[i].tuesday_open,
-							close: stores[i].tuesday_close
+							open: wineApp.getTime(stores[i].tuesday_open),
+							close: wineApp.getTime(stores[i].tuesday_close)
 						},
 						wednesday: {
-							open: stores[i].wednesday_open,
-							close: stores[i].wednesday_close
+							open: wineApp.getTime(stores[i].wednesday_open),
+							close: wineApp.getTime(stores[i].wednesday_close)
 						},
 						thursday: {
-							open: stores[i].thursday_open,
-							close: stores[i].thursday_close
+							open: wineApp.getTime(stores[i].thursday_open),
+							close: wineApp.getTime(stores[i].thursday_close)
 						},
 						friday: {
-							open: stores[i].friday_open,
-							close: stores[i].friday_close
+							open: wineApp.getTime(stores[i].friday_open),
+							close: wineApp.getTime(stores[i].friday_close)
 						},
 						saturday: {
-							open: stores[i].saturday_open,
-							close: stores[i].saturday_close
+							open: wineApp.getTime(stores[i].saturday_open),
+							close: wineApp.getTime(stores[i].saturday_close)
 						},
 						sunday: {
-							open: stores[i].sunday_open,
-							close: stores[i].sunday_close
+							open: wineApp.getTime(stores[i].sunday_open),
+							close: wineApp.getTime(stores[i].sunday_close)
 						}
 					},
+					quantity: stores[i].quantity			
 				}
 			}
+
 			wineApp.loadMap(userCoords, storeInfo);
 		});
 }
 
 wineApp.loadMap = (centerCoords, storesWithProduct) => {
+	$('#map').toggle(true);	
 	const map = new google.maps.Map(
 		document.getElementById('map'), {zoom: 12, center: centerCoords});
 	const markers = [];
@@ -201,16 +200,15 @@ wineApp.init = () => {
 		e.preventDefault();
 		$('#loader').addClass("loader");
 		$('#locations').toggle(false);
-		wineApp.pageNumber = 1;
-		wineApp.wineList = [];
 		$('#wine').empty();
 		searchFood = $('#food').val();
 		searchPrice = $('#price').val();
 		console.log(searchFood + searchPrice);
-		wineApp.getWines(searchFood, searchPrice, wineApp.pageNumber);
+		wineApp.getWines(searchFood, searchPrice, Math.floor(Math.random()*100));
 	});	
 	$('#storeButton').on('click', function(e) {
 		wineApp.getUserCoords();
+		console.log(wineApp.getTime(570));
 	});
 }
 
