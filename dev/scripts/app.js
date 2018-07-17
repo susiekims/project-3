@@ -51,9 +51,10 @@ wineApp.displayWine = (wine) => {
 	const $name = $('<h2>').text(wine.name);
 	const $producer = $('<h3>').text(wine.producer_name);
 	const $varietal = $('<p>').text(wine.varietal);
+	const $serving = $('<p>').text(wine.serving_suggestion);
 	const $taste = $('<p>').text(wine.tasting_note);
 	const $imgURL = $('<img>').attr('src', wine.image_url);
-	$('#wine').append($name, $producer, $varietal, $taste, $imgURL);
+	$('#wine').append($name, $producer, $varietal, $taste, $serving, $imgURL);
 	wineApp.productID = wine.id;
 }
 
@@ -107,6 +108,10 @@ wineApp.getStores = (idNumber, latitude, longitude) => {
 		}).then(function(res) {	
 			const stores = res.result;
 			console.log(stores);
+		if (stores.length == 0) {
+				$('#map').append(`<h1>Sorry, no stores near you carry this wine</h1>`)
+		} else {
+
 			const userCoords = {
 				lat: latitude,
 				lng: longitude
@@ -149,23 +154,31 @@ wineApp.getStores = (idNumber, latitude, longitude) => {
 							close: wineApp.getTime(stores[i].sunday_close)
 						}
 					},
-					quantity: stores[i].quantity			
+					quantity: stores[i].quantity,
+					distance: stores[i].distance_in_meters/1000,
+					address: stores[i].address_line_1		
 				}
 			}
 
 			wineApp.loadMap(userCoords, storeInfo);
+		
+		}	
 		});
 }
 
 wineApp.loadMap = (centerCoords, storesWithProduct) => {
 	$('#map').toggle(true);	
+	$('#list').toggle(true);
 	const map = new google.maps.Map(
 		document.getElementById('map'), {zoom: 12, center: centerCoords});
 	const markers = [];
 	const infoWindow = [];
-	const content = [];
+	const contentHTML = [];
+	const locationsHTML = [];
+
+
 	for (let i = 0; i < storesWithProduct.length; i++) {
-		content[i] = `<div id="content_${i}">
+		contentHTML[i] = `<div id="content_${i}">
 			<h3>${storesWithProduct[i].storeName}</h3>
 			<h3>Hours</h3>
 			<ul>
@@ -179,6 +192,12 @@ wineApp.loadMap = (centerCoords, storesWithProduct) => {
 			</ul>
 			<h3>Bottles in stock: ${storesWithProduct[i].quantity}</h3>
 		`;
+		const userMarker = new google.maps.Marker(
+			{
+				position: centerCoords, 
+				map: map
+			}
+		);
 		markers[i] = new google.maps.Marker(
 			{
 				position: storesWithProduct[i].coords, 
@@ -187,11 +206,20 @@ wineApp.loadMap = (centerCoords, storesWithProduct) => {
 			}
 		);
         infoWindow[i] = new google.maps.InfoWindow({
-        	content: content[i]
+        	content: contentHTML[i]
         });
         markers[i].addListener('click', function() {
         	infoWindow[i].open(map, markers[i]);
         });
+        locationsHTML[i] = `
+		<li>
+			<h3>${storesWithProduct[i].storeName}</h3>
+			<p>${storesWithProduct[i].address}</p>
+			<p>${storesWithProduct[i].distance}km away</p>
+			<p>${storesWithProduct[i].quantity} bottles in stock</p>
+		</li>
+        `
+        $('#list').append(locationsHTML[i]);
 	}
 }
 
@@ -208,7 +236,6 @@ wineApp.init = () => {
 	});	
 	$('#storeButton').on('click', function(e) {
 		wineApp.getUserCoords();
-		console.log(wineApp.getTime(570));
 	});
 }
 
